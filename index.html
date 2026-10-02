@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyFoundIt — GCTU Lost ID Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+</head>
+<body>
+
+<!-- Desktop/tablet top navbar -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="brand-icon">🪪</span> MyFoundIt</div>
+    <nav class="topnav" aria-label="Main navigation">
+      <button id="topnav-browse" class="topnav-link active">Browse</button>
+      <button id="topnav-report" class="topnav-link">Report Found ID</button>
+      <button id="topnav-owner" class="topnav-link">Manage</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="badge-icon" aria-hidden="true">🪪</div>
+    <h1>Lost your GCTU ID?</h1>
+    <p>Find it. Contact the finder. Get it back.</p>
+    <p class="hero-sub">Helping GCTU students reconnect with their lost ID cards, quickly and securely.</p>
+    <div class="hero-ctas">
+      <button id="cta-find" class="cta-primary">Find My ID</button>
+      <button id="cta-report" class="cta-secondary">Report a Found ID</button>
+    </div>
+  </section>
+
+  <div class="content-container">
+    <div id="fee-info-section">
+      <div class="info-banner">
+        <div class="info-row"><span aria-hidden="true">🎉</span> Bring in a found card, earn <strong>GH₵10</strong></div>
+        <div class="info-row"><span aria-hidden="true">💳</span> Reclaim your card in person for <strong>GH₵30</strong></div>
+      </div>
+
+      <div class="pay-card">
+        <p class="pay-title">How to pay</p>
+        <div class="pay-row">
+          <div>
+            <span class="pay-label">MTN MoMo</span>
+            <span class="pay-value">0256026355 · Owusu Benedict Jojo Junior</span>
+          </div>
+          <button class="copy-btn" data-copy="0256026355" aria-label="Copy MoMo number">Copy</button>
+        </div>
+        <div class="pay-row">
+          <div>
+            <span class="pay-label">GCB Bank</span>
+            <span class="pay-value">1011100660657 · Owusu Benedict Jojo Junior</span>
+          </div>
+          <button class="copy-btn" data-copy="1011100660657" aria-label="Copy bank account number">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <div id="view-browse">
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input id="search-input" placeholder="Search by name or student ID" aria-label="Search by name or student ID" />
+          <button id="search-clear" class="search-clear-btn" style="display:none;" aria-label="Clear search">✕</button>
+        </div>
+        <p id="results-count" class="results-count" aria-live="polite"></p>
+        <div id="listings-container" class="listings-grid">
+          <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div><div class="skeleton-line w30"></div></div></div>
+          <div class="skeleton-card"><div class="skeleton-thumb"></div><div class="skeleton-lines"><div class="skeleton-line w60"></div><div class="skeleton-line w40"></div><div class="skeleton-line w30"></div></div></div>
+        </div>
+      </div>
+
+      <div id="view-report" style="display:none;">
+        <label class="field-label" for="f-name">Name on card</label>
+        <input id="f-name" placeholder="e.g. Ama Serwaa Boateng" />
+
+        <label class="field-label" for="f-studentid">Student ID</label>
+        <input id="f-studentid" placeholder="e.g. 2425401234" />
+
+        <label class="field-label" for="f-date">Date found</label>
+        <input id="f-date" type="date" />
+
+        <label class="field-label">Photo of the card</label>
+        <p class="privacy-warning">⚠️ Make sure the photo doesn't clearly expose extra personal details (barcode, QR code, programme, or other cards nearby) beyond what's needed to identify the owner.</p>
+        <div class="photo-buttons">
+          <label>📷 Take photo<input id="f-photo-camera" type="file" accept="image/*" capture="environment" aria-label="Take a photo with camera" /></label>
+          <label>🖼️ Gallery<input id="f-photo-gallery" type="file" accept="image/*" aria-label="Choose photo from gallery" /></label>
+        </div>
+        <img id="photo-preview" class="preview-img" style="display:none;" alt="Preview of uploaded ID card photo" />
+
+        <label class="field-label" for="f-note">Note (optional)</label>
+        <input id="f-note" placeholder="Where it was found, condition, etc." />
+
+        <div id="report-error" class="error-text" style="display:none;" role="alert"></div>
+        <button class="primary" id="submit-report">Post found card</button>
+        <p class="note">Only the last 4 digits of the student ID are shown publicly, to protect against false claims.</p>
+      </div>
+
+      <div id="view-owner" style="display:none;">
+        <div id="owner-lock">
+          <label class="field-label" for="owner-code-input">Site manager passcode</label>
+          <input id="owner-code-input" type="password" />
+          <div id="owner-error" class="error-text" style="display:none;" role="alert"></div>
+          <button class="primary" id="owner-unlock-btn">Unlock</button>
+        </div>
+        <div id="owner-panel" style="display:none;">
+          <label class="field-label" style="margin-top:0;">Listings</label>
+          <div id="owner-listings"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-brand"><span aria-hidden="true">🪪</span> MyFoundIt</div>
+    <p class="footer-tagline">Helping GCTU students reconnect with their lost ID cards.</p>
+    <p class="footer-disclaimer">Independent, student-run service — not affiliated with GCTU administration.</p>
+    <div class="footer-links">
+      <button id="footer-browse" class="footer-link">Browse</button>
+      <button id="footer-report" class="footer-link">Report Found ID</button>
+      <button id="footer-owner" class="footer-link">Manage</button>
+    </div>
+    <p class="footer-note">Please only report cards you've genuinely found. False listings harm fellow students.</p>
+    <p class="footer-copy">© 2026 MyFoundIt. Independent, student-run service.</p>
+  </footer>
+
+  <!-- Mobile bottom nav -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button id="tab-browse" class="active" aria-label="Browse listings"><span class="nav-icon" aria-hidden="true">🏠</span>Browse</button>
+    <button id="tab-report" class="fab-wrap" aria-label="Report a found card"><span class="fab" aria-hidden="true">➕</span></button>
+    <button id="tab-owner" aria-label="Manage listings"><span class="nav-icon" aria-hidden="true">🔐</span>Manage</button>
+  </nav>
+
+  <div id="crop-modal" class="crop-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="Crop photo">
+    <div class="crop-box">
+      <p class="crop-title">Crop out anything extra</p>
+      <div class="crop-image-wrap"><img id="crop-image" alt="Photo to crop" /></div>
+      <div class="crop-actions">
+        <button id="crop-cancel" class="crop-cancel-btn">Cancel</button>
+        <button id="crop-confirm" class="crop-confirm-btn">Use this photo</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
